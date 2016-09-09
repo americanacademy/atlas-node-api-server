@@ -3,10 +3,10 @@
 ### Search API endpoint
 **[Demo - search "American Society"](https://ancient-eyrie-85680.herokuapp.com/api/v0/search/?q=American%20Society)**
 
-**Description:** Search the atlas for a collaborations and organizations.
+**Description:** Search the atlas for a collaborations and organizations. Returns an array of objects sorted by relevance.
 
-**Note:** If query parameters aren't specified, the default values are used and endpoint returns an alphabetical
-assortment of collaborations and organizations.
+**Note:** If query parameters aren't specified, the default values are used and the endpoint returns an alphabetically
+sorted array of collaborations and organizations.
 
 **<code>GET</code> [https://ancient-eyrie-85680.herokuapp.com/api/v0/search/](https://ancient-eyrie-85680.herokuapp.com/api/v0/search)**
 
