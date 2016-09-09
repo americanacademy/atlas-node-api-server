@@ -2,12 +2,13 @@
 
 ### Search API endpoint
 **[Demo - search "American Society"](https://ancient-eyrie-85680.herokuapp.com/api/v0/search/?q=American%20Society)**
-**Description:** Search the atlas for a collaborations and organizations.
 
-**Note:** If query parameters aren't specified, the default values are used and endpoint returns an alphabetical
-assortment of collaborations and organizations.
+**Description:** Search the atlas for a collaborations and organizations. Returns an array of objects sorted by relevance.
 
-**<code>GET</code> [https://ancient-eyrie-85680.herokuapp.com/api/v0/search]](https://ancient-eyrie-85680.herokuapp.com/api/v0/search)**
+**Note:** If query parameters aren't specified, the default values are used and the endpoint returns an alphabetically
+sorted array of collaborations and organizations.
+
+**<code>GET</code> [https://ancient-eyrie-85680.herokuapp.com/api/v0/search/](https://ancient-eyrie-85680.herokuapp.com/api/v0/search)**
 
 #### Query parameters (optional)
 
@@ -18,7 +19,5 @@ assortment of collaborations and organizations.
 | page| /?page=2 | A Positive Number (1, 2, 3, etc..) | nth array of result search (where n == page) | <code>1</code> |
 | pageCount | /?pageCount=true | <code>true</code> or <code>false</code> | number of pages for given query | <code>false</code> |
 | maxResults | /?maxResults=20  | A Positive Number | result array will be of length maxResults | <code>10</code> |
-| states | /?states[]=missouri&states[]=NY | An Array of Strings | results will be in state1 <code>||</code> state2 <code>||</code> etc.. | <code>[]</code> |
-| country | /?cities[]=San%20Francisco&cities[]=boston | An Array of Strings | results will be in country1 <code>||</code> country2 <code>||</code> etc.. | <code>[]</code> |
-
-### Collaboration API endpoint
+| states | /?states[]=missouri&states[]=NY | An Array of Strings | results will be in state1 <code>&#124;&#124;</code> state2 <code>&#124;&#124;</code> etc.. | <code>[]</code> |
+| country | /?cities[]=San%20Francisco&cities[]=boston | An Array of Strings | results will be in country1 <code>&#124;&#124;</code> country2 <code>&#124;&#124;</code> etc.. | <code>[]</code> |
