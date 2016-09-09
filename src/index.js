@@ -2,7 +2,7 @@ var express = require('express');
 var app = express();
 
 var mongoose = require ("mongoose");
-var config = require('./mongodb-config');
+var config = require('./config');
 var setupController = require('./controllers/setup.controller');
 var apiController = require('./controllers/api.controller');
 

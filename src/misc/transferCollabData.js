@@ -3,9 +3,8 @@
 */
 
 let async = require('async');
-let firebase = require('firebase');
 let mongoose = require ("mongoose");
-let mongoConfig = require('./mongodb-config');
+let config = require('../config');
 
 let Collaborations = require('./mongodb-models/collaboration.model');
 let Scopes = require('./mongodb-models/scope.model');
@@ -13,14 +12,7 @@ let Types = require('./mongodb-models/type.model');
 let Cities = require('./mongodb-models/city.model');
 let States = require('./mongodb-models/state.model');
 
-
-let config = {
-  apiKey: "AIzaSyCrjZXXm3VpFICa6OBte4NDFa0yo4ZMq0U",
-  authDomain: "science-policy-atlas.firebaseapp.com",
-  databaseURL: "https://science-policy-atlas.firebaseio.com"
-};
-
-firebase.initializeApp(config);
+let firebase = config.getFirebase();
 mongoose.connect(mongoConfig.getDbConnectionString());
 
 let dataPath = 'collaborations/details';

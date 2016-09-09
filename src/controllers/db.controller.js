@@ -1,13 +1,6 @@
-let firebase = require('firebase');
 let async = require('async');
+let firebase = require('../config').getFirebase();
 
-let fbConfig = {
-  apiKey: "AIzaSyCrjZXXm3VpFICa6OBte4NDFa0yo4ZMq0U",
-  authDomain: "science-policy-atlas.firebaseapp.com",
-  databaseURL: "https://science-policy-atlas.firebaseio.com"
-};
-
-firebase.initializeApp(fbConfig);
 let fbRef = firebase.database().ref();
 const FB_PATH = {
     collabs: {
