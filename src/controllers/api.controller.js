@@ -6,6 +6,13 @@ let defaultMaxResults = 10;
 module.exports = setupAPI;
 
 function setupAPI(app) {
+    // Allow cross-origin requests
+    app.use(function(req, res, next) {
+        res.header("Access-Control-Allow-Origin", "*");
+        res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+        next();
+    });
+
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({
         extended: true
@@ -21,6 +28,7 @@ function setupAPI(app) {
             queryType: req.query.qType,
             maxResults: req.query.maxResults > 0 ? req.query.maxResults : defaultMaxResults,
             page: req.query.page > 0 ? req.query.page : 1,
+            pageCount: req.query.pageCount || false,
             categories: req.query.categories || [],
             states: req.query.states || []
         };
@@ -43,7 +51,8 @@ function setupAPI(app) {
 
         db.collaboration({
             maxResults: req.query.maxResults > 0 ? req.query.maxResults : defaultMaxResults,
-            page: req.query.page > 0 ? req.query.page : 1
+            page: req.query.page > 0 ? req.query.page : 1,
+            pageCount: req.query.pageCount || false
         }, (err, results) => {
             if (err) {
                 res.json(err);

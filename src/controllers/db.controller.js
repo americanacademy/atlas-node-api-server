@@ -31,16 +31,30 @@ module.exports = {
 };
 
 function getCollaboration(q, callback) {
-    Collaborations
-    .find({})
-    .skip((q.page - 1) * q.maxResults).limit(q.maxResults).exec((err, results) => {
-        if (err) {
-            console.log("Error getting collaborations: " + err);
-            callback(err, null);
-        }
+    if (q.pageCount) {
+        Collaborations
+        .count({})
+        .exec((err, results) => {
+            if (err) {
+                callback({
+                    error: "Count collaborations error: " + err
+                }, null);
+            }
 
-        callback(null, results);
-    });
+            callback(null, Math.ceil(results / q.maxResults));
+        })
+    } else {
+        Collaborations
+        .find({})
+        .skip((q.page - 1) * q.maxResults).limit(q.maxResults).exec((err, results) => {
+            if (err) {
+                console.log("Error getting collaborations: " + err);
+                callback(err, null);
+            }
+
+            callback(null, results);
+        });
+    }
 }
 
 function getCollaborationById(collabId, callback) {
@@ -200,62 +214,153 @@ function searchAll(q, callback) {
         // Flatten results
         results = [].concat.apply([], results);
 
-        // Sort results and remove
-        results = results.sort((a, b) => {
-            return b.score - a.score;
-        }).slice(0, q.maxResults);
+        if (q.pageCount) {
+            // Sum results and divide by number of results per page
+            results = Math.ceil(( results[0] + results[1] ) / q.maxResults);
+            callback(null, results);
+        } else {
+            // Sort results and remove
+            results = results.sort((a, b) => {
+                return b.score - a.score;
+            }).slice(0, q.maxResults);
 
-        callback(null, results);
+            callback(null, results);
+        }
 
     })
 }
 
 function searchOrganizations(q, callback) {
-    Organizations.find({
-        $text: {
-            $search: q.queryString
+
+    if (q.queryString) { // search by queryString
+        if (q.pageCount) {
+            Organizations.count({
+                $text: {
+                    $search: q.queryString
+                }
+            }).exec((err, results) => {
+                if (err) {
+                    callback({
+                        error: "Count organizations error: " + err
+                    }, null);
+                }
+
+                callback(null, results);
+            })
+        } else {
+            Organizations.find({
+                $text: {
+                    $search: q.queryString
+                }
+            }).select({
+                score: {
+                    $meta: "textScore"
+                }
+            }).sort({
+                score: {
+                    $meta: "textScore"
+                }
+            }).skip((q.page - 1) * q.maxResults).limit(q.maxResults).exec((err, results) => {
+                if (err) {
+                    callback({
+                        error: "Organization search error: " + err
+                    }, null);
+                }
+                
+                callback(null, results); // return results
+            });
         }
-    }).select({
-        score: {
-            $meta: "textScore"
+    } else { // search All
+        if (q.pageCount) {
+            Organizations.count({}).exec((err, results) => {
+                if (err) {
+                    callback({
+                        error: "Count organizations error: " + err
+                    }, null);
+                }
+
+                callback(null, results);
+            })
+        } else {
+            Organizations.find({}).sort({
+                fbId: 1
+            }).skip((q.page - 1) * q.maxResults).limit(q.maxResults).exec((err, results) => {
+                if (err) {
+                    callback({
+                        error: "Organization search error: " + err
+                    }, null);
+                }
+                
+                callback(null, results); // return results
+            });
         }
-    }).sort({
-        score: {
-            $meta: "textScore"
-        }
-    }).skip((q.page - 1) * q.maxResults).limit(q.maxResults).exec((err, results) => {
-        if (err) {
-            callback({
-                error: "Organization search error: " + err
-            }, null);
-        }
-        
-        callback(null, results); // return results
-    });
+    }
 }
 
 function searchCollaborations(q, callback) {
-    Collaborations.find({
-        $text: {
-            $search: q.queryString
+    if (q.queryString) { // search by queryString
+        if (q.pageCount) {
+            Collaborations.count({
+                $text: {
+                    $search: q.queryString
+                }
+            }).exec((err, results) => {
+                if (err) {
+                    callback({
+                        error: "Count collaborations error: " + err
+                    }, null);
+                }
+
+                callback(null, results);
+            })
+        } else {
+            Collaborations.find({
+                $text: {
+                    $search: q.queryString
+                }
+            }).select({
+                score: {
+                    $meta: "textScore"
+                }
+            }).sort({
+                score: {
+                    $meta: "textScore"
+                }
+            }).skip((q.page - 1) * q.maxResults).limit(q.maxResults).exec((err, results) => {
+                if (err) {
+                    callback({
+                        error: "Collaborations search error: " + err
+                    }, null);
+                }
+                
+                callback(null, results); // return results
+            });
         }
-    }).select({
-        score: {
-            $meta: "textScore"
+    } else { // search all
+        if (q.pageCount) {
+            Collaborations.count({}).exec((err, results) => {
+                if (err) {
+                    callback({
+                        error: "Count collaborations error: " + err
+                    }, null);
+                }
+
+                callback(null, results);
+            })
+        } else {
+            Collaborations.find({}).sort({
+                fbId: 1
+            }).skip((q.page - 1) * q.maxResults).limit(q.maxResults).exec((err, results) => {
+                if (err) {
+                    callback({
+                        error: "Collaborations search error: " + err
+                    }, null);
+                }
+                
+                callback(null, results); // return results
+            });
         }
-    }).sort({
-        score: {
-            $meta: "textScore"
-        }
-    }).skip((q.page - 1) * q.maxResults).limit(q.maxResults).exec((err, results) => {
-        if (err) {
-            callback({
-                error: "Collaborations search error: " + err
-            }, null);
-        }
-        
-        callback(null, results); // return results
-    });
+    }
 }
 
 function creatCollaboration(collabId, data, callback) {
