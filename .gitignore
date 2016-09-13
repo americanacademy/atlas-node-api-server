@@ -1,4 +1,2 @@
 node_modules
 src/misc
-src/config/firebase-config.json
-src/config/mongodb-config.json
