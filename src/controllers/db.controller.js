@@ -81,11 +81,14 @@ function updateCollaborationById(collabId, callback) {
                 // update to firebase
                 fbRef.child(FB_PATH.collabs.details + '/' + collabId).set(snapshot.val());
                 fbRef.child(FB_PATH.collabs.updateList + '/' + collabId).remove();
-
+                
+                console.log("Updating: " + collabId);
+                // updated in mongodb
                 creatCollaboration(collabId, snapshot.val(), callback);
             });
             
         } else { // invalid access to delete
+            console.log("Cannot update: " + collabId);
             callback({
                 error: "Unauthorized permission."
             }, null);
@@ -369,20 +372,24 @@ function creatCollaboration(collabId, data, callback) {
         fbId: collabId,
         title: data.title,
         acronym: data.acronym,
-        scope: data.scope,
-        type: data.type,
+        scope: data.scope || [],
+        type: data.type || "",
         relativePath: data.relativePath,
         lastUpdated: data.lastUpdated,
         about: data.about,
         foundingDate: data.foundingDate,
         linkToFolderSites: data.linkToFolderSites,
-        contactInfo: data.contactInfo,
-        locations: data.locations,
-        memberships: data.memberships,
+        contactInfo: data.contactInfo || {},
+        locations: data.locations || [],
+        memberships: data.memberships || [],
         isActive: data.isActive,
-        membershipFee: data.membershipFee,
+        membershipFee: data.membershipFee || {},
         isNonProfit: data.isNonProfit,
-        leadContacts: data.leadContacts
+        leadContacts: data.leadContacts || [],
+        additionalFields: data.additionalFields || [{
+            title: "",
+            value: ""
+        }]
     });
 
     newCollaboration.save((err) => {
@@ -395,34 +402,20 @@ function creatCollaboration(collabId, data, callback) {
         }
 
         // Save Scopes
-        async.eachSeries(Object.keys(data.scope), (scopeIndex, nextScope) => {
-            let newScope = Scopes({
-                title: data.scope[scopeIndex]
-            });
+        if (data.scope) {
+            async.eachSeries(Object.keys(data.scope), (scopeIndex, nextScope) => {
+                let newScope = Scopes({
+                    title: data.scope[scopeIndex]
+                });
 
-            //console.log("Adding scope: " + data.scope[scopeIndex]);
+                //console.log("Adding scope: " + data.scope[scopeIndex]);
 
-            newScope.findSimilarTitle((err, scopes) => {
-                if (err) throw err;
+                newScope.findSimilarTitle((err, scopes) => {
+                    if (err) throw err;
 
-                if (scopes[0]) { // scopes already exist
+                    if (scopes[0]) { // scopes already exist
 
-                    Scopes.findByIdAndUpdate(scopes[0]._id, {
-                        $push: {
-                            "collaborations": newCollaboration._id
-                        }
-                    }, {
-                        safe: true, upsert: true
-                    }, (err, found) => {
-                        if (err)
-                            console.log("Error pusing collaborations to scope: " + err);
-
-                        nextScope();
-                    });
-                } else { // this is a new scope
-                    newScope.save((err) => {
-                        // Push collaboration to scope
-                        Scopes.findByIdAndUpdate(newScope._id, {
+                        Scopes.findByIdAndUpdate(scopes[0]._id, {
                             $push: {
                                 "collaborations": newCollaboration._id
                             }
@@ -430,67 +423,67 @@ function creatCollaboration(collabId, data, callback) {
                             safe: true, upsert: true
                         }, (err, found) => {
                             if (err)
-                                console.log("Error pushing collaborations to scope: " + err);
+                                console.log("Error pusing collaborations to scope: " + err);
 
                             nextScope();
                         });
-                    });                     
-                }
+                    } else { // this is a new scope
+                        newScope.save((err) => {
+                            // Push collaboration to scope
+                            Scopes.findByIdAndUpdate(newScope._id, {
+                                $push: {
+                                    "collaborations": newCollaboration._id
+                                }
+                            }, {
+                                safe: true, upsert: true
+                            }, (err, found) => {
+                                if (err)
+                                    console.log("Error pushing collaborations to scope: " + err);
 
+                                nextScope();
+                            });
+                        });                     
+                    }
+
+                });
+            }, (err) => {
+                if (err) {
+                    callback(err, null);
+                }
             });
-        }, (err) => {
-            if (err) {
-                callback(err, null);
-            }
-        });
+        }
 
         // Save Locations
-        async.eachSeries(Object.keys(data.locations), (locationId, nextLocation) => {
+        if (data.locations) {
+            async.eachSeries(Object.keys(data.locations || []), (locationId, nextLocation) => {
 
-            let ready = {};
-            let readyForNextLocation = (item) => {
-                ready[item] = true;
-                //console.log("... " + item + " is ready...");
-                if (ready["city"] && ready["state"]) {
-                    nextLocation();
-                }
-            };
+                let ready = {};
+                let readyForNextLocation = (item) => {
+                    ready[item] = true;
+                    //console.log("... " + item + " is ready...");
+                    if (ready["city"] && ready["state"]) {
+                        nextLocation();
+                    }
+                };
 
-            let newCity = Cities({
-                title: data.locations[locationId].city
-            });
+                let newCity = Cities({
+                    title: data.locations[locationId].city
+                });
 
-            let newState = States({
-                title: data.locations[locationId].state
-            });
+                let newState = States({
+                    title: data.locations[locationId].state
+                });
 
-            //console.log("Adding location: " + data.locations[locationId]);
+                //console.log("Adding location: " + data.locations[locationId]);
 
-            // Check if newCity exists
-            newCity.findSimilarTitle((err, cities) => {
-                if (err) throw err;
+                // Check if newCity exists
+                newCity.findSimilarTitle((err, cities) => {
+                    if (err) throw err;
 
-                if (cities[0]) { // old city
-                    // push collabid to city
+                    if (cities[0]) { // old city
+                        // push collabid to city
 
-                    Cities.findByIdAndUpdate(cities[0]._id, {
-                        $push: {
-                            "collaborations": newCollaboration._id
-                        }
-                    }, {
-                        safe: true, upsert: true
-                    }, (err, found) => {
-                        if (err)
-                            console.log("Error pushing collaboration to city: " + err);
-                        
-                        readyForNextLocation("city");
-                    });
-                } else { // new city
-
-                    // push collabid to city
-                    newCity.save((err) => {
-                        // Push collaboration to scope
-                        Cities.findByIdAndUpdate(newCity._id, {
+                        Cities.findByIdAndUpdate(cities[0]._id, {
                             $push: {
                                 "collaborations": newCollaboration._id
                             }
@@ -502,34 +495,34 @@ function creatCollaboration(collabId, data, callback) {
                             
                             readyForNextLocation("city");
                         });
-                    });
-                }
-            });
+                    } else { // new city
 
-            newState.findSimilarTitle((err, states) => {
-                if (err) throw err;
+                        // push collabid to city
+                        newCity.save((err) => {
+                            // Push collaboration to scope
+                            Cities.findByIdAndUpdate(newCity._id, {
+                                $push: {
+                                    "collaborations": newCollaboration._id
+                                }
+                            }, {
+                                safe: true, upsert: true
+                            }, (err, found) => {
+                                if (err)
+                                    console.log("Error pushing collaboration to city: " + err);
+                                
+                                readyForNextLocation("city");
+                            });
+                        });
+                    }
+                });
 
-                if (states[0]) { // old city
-                    // push collabid to city
+                newState.findSimilarTitle((err, states) => {
+                    if (err) throw err;
 
-                    States.findByIdAndUpdate(states[0]._id, {
-                        $push: {
-                            "collaborations": newCollaboration._id
-                        }
-                    }, {
-                        safe: true, upsert: true
-                    }, (err, found) => {
-                        if (err)
-                            console.log("Error pushing collaboration to state: " + err);
-                        
-                        readyForNextLocation("state");
-                    });
-                } else { // new city
+                    if (states[0]) { // old city
+                        // push collabid to city
 
-                    // push collabid to city
-                    newState.save((err) => {
-                        // Push collaboration to scope
-                        States.findByIdAndUpdate(newState._id, {
+                        States.findByIdAndUpdate(states[0]._id, {
                             $push: {
                                 "collaborations": newCollaboration._id
                             }
@@ -541,41 +534,44 @@ function creatCollaboration(collabId, data, callback) {
                             
                             readyForNextLocation("state");
                         });
-                    });
+                    } else { // new city
+
+                        // push collabid to city
+                        newState.save((err) => {
+                            // Push collaboration to scope
+                            States.findByIdAndUpdate(newState._id, {
+                                $push: {
+                                    "collaborations": newCollaboration._id
+                                }
+                            }, {
+                                safe: true, upsert: true
+                            }, (err, found) => {
+                                if (err)
+                                    console.log("Error pushing collaboration to state: " + err);
+                                
+                                readyForNextLocation("state");
+                            });
+                        });
+                    }
+                });
+                
+            }, (err) => {
+                if (err) {
+                    callback(err, null);
                 }
             });
-            
-        }, (err) => {
-            if (err) {
-                callback(err, null);
-            }
-        });
+        }
         
+        if (data.type) {
+            let newType = Types({
+                title: data.type
+            });
 
-        let newType = Types({
-            title: data.type
-        });
+            newType.findSimilarTitle((err, types) => {
+                if (err) throw err;
 
-        newType.findSimilarTitle((err, types) => {
-            if (err) throw err;
-
-            if (types[0]) {
-                Types.findByIdAndUpdate(types[0]._id, {
-                    $push: {
-                        "collaborations": newCollaboration._id
-                    }
-                }, {
-                    safe: true, upsert: true
-                }, (err, found) => {
-                    if (err) {
-                        callback(err, null);
-                    }
-                    
-                });
-            } else {
-                newType.save((err) => {
-                    // Push collaboration to type
-                    States.findByIdAndUpdate(newType._id, {
+                if (types[0]) {
+                    Types.findByIdAndUpdate(types[0]._id, {
                         $push: {
                             "collaborations": newCollaboration._id
                         }
@@ -585,10 +581,26 @@ function creatCollaboration(collabId, data, callback) {
                         if (err) {
                             callback(err, null);
                         }
+                        
                     });
-                });
-            }
-        });
+                } else {
+                    newType.save((err) => {
+                        // Push collaboration to type
+                        States.findByIdAndUpdate(newType._id, {
+                            $push: {
+                                "collaborations": newCollaboration._id
+                            }
+                        }, {
+                            safe: true, upsert: true
+                        }, (err, found) => {
+                            if (err) {
+                                callback(err, null);
+                            }
+                        });
+                    });
+                }
+            });
+        }
 
     });
 

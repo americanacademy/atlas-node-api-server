@@ -38,6 +38,10 @@ let Collaboration = new Schema({
     leadContacts: [{
         name: String,
         contactLink: String
+    }],
+    additionalFields: [{
+        title: String,
+        value: String
     }]
 });
 
