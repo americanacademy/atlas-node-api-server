@@ -51,7 +51,8 @@ function saveToMongoAsync(data) {
             fbId: orgId,
             title: data[orgId].title,
             scope: data[orgId].scope,
-            type: data[orgId].type,
+            //type: data[orgId].type,
+            type: data[orgId].lobby,
             relativePath: data[orgId].relativePath,
             lastUpdated: data[orgId].lastUpdated,
             about: data[orgId].about,
@@ -62,7 +63,7 @@ function saveToMongoAsync(data) {
             collaborations: data[orgId].collaborations,
             isActive: data[orgId].isActive,
             nonProfitStatus: data[orgId].nonProfitStatus,
-            lobby: data[orgId].lobby
+            //lobby: data[orgId].lobby
         });
 
         newOrganization.save((err) => {
