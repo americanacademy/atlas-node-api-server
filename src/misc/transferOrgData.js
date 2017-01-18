@@ -51,7 +51,7 @@ function saveToMongoAsync(data) {
             fbId: orgId,
             title: data[orgId].title,
             scope: data[orgId].scope,
-            type: data[orgId].type + ' ' + data[orgId].lobby,
+            type: data[orgId].type + ' ' + data[orgId].nonProfitStatus,
             relativePath: data[orgId].relativePath,
             lastUpdated: data[orgId].lastUpdated,
             about: data[orgId].about,
